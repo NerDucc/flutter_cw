@@ -130,4 +130,78 @@ class TripDB {
       return false;
     }
   }
+
+
+  Future<bool> update(
+      int ID,
+      String tripName,
+      String tripDate,
+      String tripDescription,
+      String tripTransportation,
+      String tripParticipant,
+      String tripDestination,
+      String tripRisk) async {
+    final db = _db;
+    if (db == null) {
+      return false;
+    }
+    try {
+      final updateCount = await db.update(
+          'trips',
+          {
+           "name": tripName,
+          "date": tripDate,
+          "destination": tripDestination,
+          "participant": tripParticipant,
+          "transportation": tripTransportation,
+          "description": tripDescription,
+          "risk": tripRisk,
+          },
+          where: 'id = ?',
+          whereArgs: [ID]);
+        final trip = Trip(
+        id: ID,
+        name: tripName, 
+        date: tripDate,
+        destination: tripDestination,
+        description: tripDescription,
+        risk: tripRisk,
+        participant: tripParticipant,
+        transportation: tripTransportation,
+      );
+
+      if (updateCount == 1) {
+        _tripList.removeWhere((element) => element.id == trip.id);
+        _tripList.add(trip);
+        _streamController.add(_tripList);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
+  Future<bool> delete(Trip trip) async {
+    final db = _db;
+    if (db == null) {
+      return false;
+    }
+    try {
+      final deletedCount =
+          await db.delete('trips', where: 'id = ?', whereArgs: [trip.id]);
+
+      if (deletedCount == 1) {
+        _tripList.remove(trip);
+        _streamController.add(_tripList);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print(e);
+      return false;
+    }
+  }
 }

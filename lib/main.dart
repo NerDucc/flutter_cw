@@ -1,7 +1,8 @@
+import 'package:coursework/Coursework/update.dart';
 import 'package:flutter/material.dart';
-import 'package:coursework/coursework/my_trip.dart';
-import 'package:coursework/coursework/new_trip.dart';
-import 'package:coursework/coursework/route_names.dart';
+import 'package:coursework/Coursework/my_trip.dart';
+import 'package:coursework/Coursework/new_trip.dart';
+import 'package:coursework/Coursework/route_names.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,6 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       routes: {
         RouteNames.NewTrip: (context) => NewTrip(),
+        RouteNames.UpdateTrip:(context) => UpdateTrip(),
         RouteNames.MyTrip: (context) => const MyTrip(),
       },
       initialRoute: RouteNames.MyTrip,

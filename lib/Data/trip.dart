@@ -3,7 +3,7 @@ import 'package:coursework/coursework/new_trip.dart';
 
 
 class Trip implements Comparable {
-  final int id;
+  final int? id;
   final String name;
   final String date;
   final String destination;
@@ -23,8 +23,6 @@ class Trip implements Comparable {
     required this.transportation,
   });
 
-  
-
   Trip.fromRow(Map<String, Object?> row)
       : id = row["id"] as int,
         name = row["name"] as String,
@@ -36,7 +34,7 @@ class Trip implements Comparable {
         risk = row["risk"] as String;
 
   @override
-  int compareTo(covariant Trip other) => other.id.compareTo(id);
+  int compareTo(covariant Trip other) => other.id!.compareTo(id!);
 
   @override
   bool operator ==(covariant Trip other) => id == other.id;
@@ -47,4 +45,8 @@ class Trip implements Comparable {
   @override
   String toString() =>
       "Trip ID = $id, trip name = $name, trip date = $date, trip destination = $destination, trip description = $description, trip risk = $risk, participant = $participant, transportation = $transportation";
+
+  static empty(){
+    return Trip(id: null, name: '', date: '', destination: '', description: '', risk: '', participant: '', transportation: '');
+}
 }

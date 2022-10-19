@@ -1,7 +1,6 @@
-// ignore_for_file: prefer_const_constructors
+// ignore_for_file: prefer_const_constructors, non_constant_identifier_names
 
 import 'package:coursework/Coursework/route_names.dart';
-import 'package:coursework/data/trip.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -9,28 +8,29 @@ import '../data/db.dart';
 
 enum RiskRequirement { Required, NotRequired }
 
-class NewTrip extends StatefulWidget {
+class UpdateTrip extends StatefulWidget {
   // const NewTrip({Key? key}) : super(key: key);
-  NewTrip({Key? key, this.theTrip}) : super(key: key);
-
-  Trip? theTrip;
+  const UpdateTrip({Key? key}) : super(key: key);
 
   @override
-  State<NewTrip> createState() => _NewTripState();
+  State<UpdateTrip> createState() => _UpdateTripState();
 }
 
-class _NewTripState extends State<NewTrip> {
+class _UpdateTripState extends State<UpdateTrip> {
   late final TripDB _tripStorage;
-  _NewTripState() {
+
+  _UpdateTripState() {
     _selectval = trip_list[0];
   }
   String result = "Details: ";
-  final TextEditingController txtDestination = TextEditingController();
-  final TextEditingController txtParticipant = TextEditingController();
-  final TextEditingController txtTransportation = TextEditingController();
-  final TextEditingController txtDescription = TextEditingController();
-  final TextEditingController txtRisk = TextEditingController();
-  final TextEditingController txtDate = TextEditingController();
+  int id = 0;
+  TextEditingController txtDestination = TextEditingController();
+  TextEditingController txtParticipant = TextEditingController();
+  TextEditingController txtTransportation = TextEditingController();
+  TextEditingController txtDescription = TextEditingController();
+  TextEditingController txtRisk = TextEditingController();
+  TextEditingController txtDate = TextEditingController();
+  // DateTime _dateTime = {$(DateTime.da)};
   RiskRequirement? requirement;
   final trip_list = ["Conference", "Signing", "Meeting", "Negotiation"];
   String? _selectval = "";
@@ -45,9 +45,22 @@ class _NewTripState extends State<NewTrip> {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments;
+    final received = args as Map;
+    id = received['id'];
+    txtDestination.text = received['destination'];
+    txtDate.text = received['date'];
+    txtDescription.text = received['description'];
+    txtParticipant.text = received['participant'];
+    txtRisk.text = received['risk'];
+    txtTransportation.text = received['transportation'];
+
+    // if(txtRisk.text == "Risk assessment required"){
+    //   value = true;
+    // }
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add new trip"),
+        title: const Text("Update trip"),
         centerTitle: true,
       ),
       body: Container(
@@ -55,7 +68,7 @@ class _NewTripState extends State<NewTrip> {
         child: ListView(
           children: [
             DropdownButtonFormField(
-              value: _selectval,
+              value: received['name'],
               items: trip_list
                   .map((e) => (DropdownMenuItem(
                         value: e,
@@ -90,11 +103,9 @@ class _NewTripState extends State<NewTrip> {
             ),
             TextFormField(
                 controller: txtDate,
-                // initialValue: DateTime.now() as String,
                 decoration: InputDecoration(
-                    icon: Icon(Icons.calendar_today), //icon of text field
-                    labelText: "Enter Date" //label text of field
-                    ),
+                  icon: Icon(Icons.calendar_today), //icon of text field
+                ),
                 readOnly: true,
                 onTap: () async {
                   DateTime? pickedDate = await showDatePicker(
@@ -164,23 +175,24 @@ class _NewTripState extends State<NewTrip> {
                     onChanged: (onchanged) {
                       setState(() {
                         value = onchanged;
-                      });
-                      if (value == true) {
-                        txtRisk.text = "Risk assessment required";
-                      } else {
-                        txtRisk.text = "Risk assessment not required";
                       }
-                    })
+                      );
+                      if (value == true) {
+                          txtRisk.text = "Risk assessment required";
+                        } else {
+                          txtRisk.text = "Risk assessment not required";
+                        }
+                    },
+                    )
+
               ],
             ),
             SizedBox(
               height: 20.0,
             ),
             ElevatedButton(
-                onPressed: () async {
-                  saveTrip();
-                },
-                child: Text('Save',
+                onPressed: saveTrip,
+                child: Text('Update',
                     style: TextStyle(
                       fontSize: 18,
                     ))),
@@ -191,9 +203,10 @@ class _NewTripState extends State<NewTrip> {
   }
 
   Future<void> saveTrip() async {
-    bool shouldAdd = await showAddDialog(context);
-    if(shouldAdd)
-    {await _tripStorage.create(
+    bool shouldUpdate = await showUpdateDialog(context);
+    if(shouldUpdate)
+    {await _tripStorage.update(
+      id,
       _selectval.toString(),
       txtDate.text,
       txtDescription.text,
@@ -208,10 +221,6 @@ class _NewTripState extends State<NewTrip> {
       if (!currentFocus.hasPrimaryFocus) {
         currentFocus.unfocus();
       }
-
-      // _tripStorage.create(_selectval.toString(), txtDate.text, txtDescription.text, txtTransportation.text, txtParticipant.text, txtDestination.text, txtRisk.text);
-      // result +=
-      //     "\n${_selectval.toString()} |${txtDestination.text} | ${txtParticipant.text} | ${txtTransportation.text} | ${txtDescription.text} | ${txtDate.text} | ${txtRisk.text} ";
       txtDestination.clear();
       txtTransportation.clear();
       txtParticipant.clear();
@@ -219,8 +228,6 @@ class _NewTripState extends State<NewTrip> {
       txtRisk.clear();
       txtDate.clear();
 
-      //print(_selectval.toString(), txtDate.text, txtDescription.text, txtTransportation.text, txtParticipant.text, txtDestination.text, txtRisk.text);
-      // print(result);
       Navigator.pushNamed(context, RouteNames.MyTrip);
     });}
   }
@@ -235,9 +242,9 @@ class _NewTripState extends State<NewTrip> {
     txtRisk.dispose();
     super.dispose();
   }
-
-  Future<bool> showAddDialog(BuildContext context) {
-    return showDialog(
+  
+  Future<bool> showUpdateDialog(BuildContext context) {
+     return showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -267,4 +274,4 @@ class _NewTripState extends State<NewTrip> {
       }
     });
   }
-}
+  }

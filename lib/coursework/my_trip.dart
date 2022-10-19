@@ -1,10 +1,8 @@
 // ignore: implementation_imports
-import 'package:coursework/coursework/new_trip.dart';
-import 'package:coursework/coursework/route_names.dart';
+import 'package:coursework/Coursework/route_names.dart';
 import 'package:coursework/data/db.dart';
 import 'package:coursework/data/trip.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
 
 class MyTrip extends StatefulWidget {
   const MyTrip({super.key});
@@ -47,7 +45,7 @@ class _MyTripState extends State<MyTrip> {
                     );
                   }
                   final tripList = snapshot.data as List<Trip>;
-                  print(tripList);
+                  // print(tripList);
                   return Column(
                     children: [
                       Expanded(
@@ -56,27 +54,47 @@ class _MyTripState extends State<MyTrip> {
                             itemBuilder: ((context, index) {
                               final trip = tripList[index];
                               return ListTile(
-                                  onTap: () {
-                                    print(trip.id);
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              NewTrip(theTrip: trip),
-                                        ));
-                                  },
-                                  title: Text("Trip's name: ${trip.name}",
+                                onTap: () {
+                                  // print(trip.id);
+                                  Navigator.pushNamed(
+                                      context, RouteNames.UpdateTrip,
+                                      arguments: {
+                                        'id': trip.id,
+                                        'name': trip.name,
+                                        'date': trip.date,
+                                        'participant': trip.participant,
+                                        'destination': trip.destination,
+                                        'description': trip.description,
+                                        'risk': trip.risk,
+                                        'transportation': trip.transportation
+                                      });
+
+                                },
+                                title: Text(
+                                  "Trip's name: ${trip.name}",
                                   style: const TextStyle(
                                     color: Color.fromARGB(221, 35, 34, 34),
                                     fontSize: 20,
-                                  ),),
-                                  
-                                  subtitle: Text("Travel date: ${trip.date}",style: const TextStyle(
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  "Travel date: ${trip.date}",
+                                  style: const TextStyle(
                                     color: Color.fromARGB(221, 82, 79, 79),
                                     fontSize: 17,
                                   ),
-                                ));
-                                  
+                                ),
+                                trailing: TextButton(
+                                    onPressed: () async {
+                                      final shouldDelete =
+                                          await showDeleteDialog(context);
+                                      if (shouldDelete) {
+                                        await _tripStorage.delete(trip);
+                                      }
+                                    },
+                                    child: const Icon(
+                                        Icons.delete_forever_rounded)),
+                              );
                             })),
                       ),
                     ],
@@ -96,4 +114,36 @@ class _MyTripState extends State<MyTrip> {
           child: const Icon(Icons.add),
         ));
   }
+
+  Future<bool> showDeleteDialog(BuildContext context) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: const Text("Are you sure you want to delete this trip?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+              child: const Text("No"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+              child: const Text("Yes"),
+            ),
+          ],
+        );
+      },
+    ).then((value) {
+      if (value is bool) {
+        return value;
+      } else {
+        return false;
+      }
+    });
+  }
+  
 }
