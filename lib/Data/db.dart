@@ -48,7 +48,6 @@ class TripDB {
       );
       _tripList.add(trip);
       _streamController.add(_tripList);
-      print(_streamController);
       return true;
     } catch (e) {
       print("Error when inserting is ${e}");

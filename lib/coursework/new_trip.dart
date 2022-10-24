@@ -12,7 +12,7 @@ enum RiskRequirement { Required, NotRequired }
 class NewTrip extends StatefulWidget {
   // const NewTrip({Key? key}) : super(key: key);
   NewTrip({Key? key, this.theTrip}) : super(key: key);
-
+  
   Trip? theTrip;
 
   @override
@@ -21,8 +21,10 @@ class NewTrip extends StatefulWidget {
 
 class _NewTripState extends State<NewTrip> {
   late final TripDB _tripStorage;
+  final _formKey = GlobalKey<FormState>();
+
   _NewTripState() {
-    _selectval = trip_list[0];
+    _selectval = tripList[0];
   }
   String result = "Details: ";
   final TextEditingController txtDestination = TextEditingController();
@@ -32,9 +34,9 @@ class _NewTripState extends State<NewTrip> {
   final TextEditingController txtRisk = TextEditingController();
   final TextEditingController txtDate = TextEditingController();
   RiskRequirement? requirement;
-  final trip_list = ["Conference", "Signing", "Meeting", "Negotiation"];
+  final tripList = ["Conference", "Signing", "Meeting", "Negotiation"];
   String? _selectval = "";
-  bool value = false;
+  late bool value = false;
 
   @override
   void initState() {
@@ -52,139 +54,182 @@ class _NewTripState extends State<NewTrip> {
       ),
       body: Container(
         padding: EdgeInsets.all(20.0),
-        child: ListView(
-          children: [
-            DropdownButtonFormField(
-              value: _selectval,
-              items: trip_list
-                  .map((e) => (DropdownMenuItem(
-                        value: e,
-                        child: Text(e),
-                      )))
-                  .toList(),
-              onChanged: (val) {
-                setState(() {
-                  _selectval = val as String;
-                });
-              },
-              icon: Icon(Icons.arrow_drop_down),
-              decoration: InputDecoration(
-                labelText: "Name of the trip",
-                icon: Icon(Icons.business_center),
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              SizedBox(
+                height: 10.0,
               ),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            TextFormField(
-              controller: txtDestination,
-              decoration: InputDecoration(
-                hintText: "Destination",
-                icon: const Icon(Icons.place),
-                border: OutlineInputBorder(),
-              ),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            TextFormField(
-                controller: txtDate,
-                // initialValue: DateTime.now() as String,
+              DropdownButtonFormField(
+                value: _selectval,
+                items: tripList
+                    .map((e) => (DropdownMenuItem(
+                          value: e,
+                          child: Text(e),
+                        )))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectval = val as String;
+                  });
+                },
+                icon: Icon(Icons.arrow_drop_down),
                 decoration: InputDecoration(
-                    icon: Icon(Icons.calendar_today), //icon of text field
-                    labelText: "Enter Date" //label text of field
-                    ),
-                readOnly: true,
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(
-                          2022), //DateTime.now() - not to allow to choose before today.
-                      lastDate: DateTime(2101));
-                  if (pickedDate != null) {
-                    String formattedDate =
-                        DateFormat('yyyy-MM-dd').format(pickedDate);
-                    txtDate.text = formattedDate;
-                  }
-                }),
-            SizedBox(
-              height: 20.0,
-            ),
-            TextFormField(
-              controller: txtParticipant,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                hintText: "Participant",
-                icon: const Icon(Icons.people),
-                border: OutlineInputBorder(),
+                  labelText: "Name of the trip",
+                  icon: Icon(Icons.business_center),
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            TextFormField(
-              controller: txtTransportation,
-              decoration: InputDecoration(
-                hintText: "Transportation",
-                icon: const Icon(Icons.emoji_transportation),
-                border: OutlineInputBorder(),
+              SizedBox(
+                height: 20.0,
               ),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            TextFormField(
-              controller: txtDescription,
-              decoration: InputDecoration(
-                hintText: "Description",
-                icon: const Icon(Icons.description),
-                border: OutlineInputBorder(),
+              TextFormField(
+                controller: txtDestination,
+                validator: requiredField,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                decoration: InputDecoration(
+                  labelText: "Destination",
+                  hintText: "Destination",
+                  icon: const Icon(Icons.place),
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            Row(
-              children: [
-                Flexible(
-                  child: TextFormField(
-                    controller: txtRisk,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      hintText: "Risk assessment",
-                      icon: const Icon(Icons.crisis_alert),
-                      border: OutlineInputBorder(),
+              SizedBox(
+                height: 20.0,
+              ),
+              TextFormField(
+                  controller: txtDate,
+                  validator: requiredField,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  // initialValue: DateTime.now() as String,
+                  decoration: InputDecoration(
+
+                      icon: Icon(Icons.calendar_today), //icon of text field
+                      labelText: "Date of the trip " //label text of field
+                      ),
+                  readOnly: true,
+                  onTap: () async {
+                    DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(
+                            2022), //DateTime.now() - not to allow to choose before today.
+                        lastDate: DateTime(2101));
+                    if (pickedDate != null) {
+                      String formattedDate =
+                          DateFormat('yyyy-MM-dd').format(pickedDate);
+                      txtDate.text = formattedDate;
+                    }
+                  }),
+              SizedBox(
+                height: 20.0,
+              ),
+              Row(
+                children: [
+                  Flexible(
+                    child: TextFormField(
+                      validator: requiredField,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      controller: txtRisk,
+                      readOnly: true,
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              content: const Text(
+                                  "Risk assessment for the trip!!!"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop(false);
+                                    txtRisk.text = "Not Required";
+                                  },
+                                  child: const Text("No"),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    txtRisk.text = "Required";
+                                    Navigator.of(context).pop(false);
+                                  },
+                                  child: const Text("Yes"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                      decoration: InputDecoration(
+                        hintText: "Risk assessment",
+                        icon: const Icon(Icons.crisis_alert),
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ),
+                  // Switch(
+                  //     value: value,
+                  //     onChanged: (onchanged) {
+                  //       setState(() {
+                  //         value = onchanged;
+                  //       });
+                  //     })
+                ],
+              ),
+              SizedBox(
+                height: 20.0,
+              ),
+              
+              TextFormField(
+                controller: txtDescription,
+                decoration: InputDecoration(
+                  labelText: "Description",
+                  hintText: "Description",
+                  icon: const Icon(Icons.description),
+                  border: OutlineInputBorder(),
                 ),
-                Switch(
-                    value: value,
-                    onChanged: (onchanged) {
-                      setState(() {
-                        value = onchanged;
-                      });
-                      if (value == true) {
-                        txtRisk.text = "Risk assessment required";
-                      } else {
-                        txtRisk.text = "Risk assessment not required";
-                      }
-                    })
-              ],
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            ElevatedButton(
-                onPressed: () async {
-                  saveTrip();
-                },
-                child: Text('Save',
-                    style: TextStyle(
-                      fontSize: 18,
-                    ))),
-          ],
+              ), 
+              SizedBox(
+                height: 20.0,
+              ),
+              TextFormField(
+                controller: txtParticipant,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Participant",
+                  hintText: "Participant",
+                  icon: const Icon(Icons.people),
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(
+                height: 20.0,
+              ),
+              TextFormField(
+                controller: txtTransportation,
+                decoration: InputDecoration(
+                  labelText: "Transportation",
+                  hintText: "Transportation",
+                  icon: const Icon(Icons.emoji_transportation),
+                  border: OutlineInputBorder(),
+                ),
+              ),     
+              SizedBox(
+                height: 20.0,
+              ),
+              ElevatedButton(
+                 onPressed: (){
+                    if (_formKey.currentState!.validate()){
+                      saveTrip();
+                    }
+                    
+                  },
+                  child: Text('Save',
+                      style: TextStyle(
+                        fontSize: 18,
+                      ))),
+            ],
+          ),
         ),
       ),
     );
@@ -192,37 +237,38 @@ class _NewTripState extends State<NewTrip> {
 
   Future<void> saveTrip() async {
     bool shouldAdd = await showAddDialog(context);
-    if(shouldAdd)
-    {await _tripStorage.create(
-      _selectval.toString(),
-      txtDate.text,
-      txtDescription.text,
-      txtTransportation.text,
-      txtParticipant.text,
-      txtDestination.text,
-      txtRisk.text,
-    );
-    setState(() {
-      //close keyboard
-      var currentFocus = FocusScope.of(context);
-      if (!currentFocus.hasPrimaryFocus) {
-        currentFocus.unfocus();
-      }
+    if (shouldAdd) {
+      await _tripStorage.create(
+        _selectval.toString(),
+        txtDate.text,
+        txtDescription.text,
+        txtTransportation.text,
+        txtParticipant.text,
+        txtDestination.text,
+        txtRisk.text,
+      );
+      setState(() {
+        //close keyboard
+        var currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus) {
+          currentFocus.unfocus();
+        }
 
-      // _tripStorage.create(_selectval.toString(), txtDate.text, txtDescription.text, txtTransportation.text, txtParticipant.text, txtDestination.text, txtRisk.text);
-      // result +=
-      //     "\n${_selectval.toString()} |${txtDestination.text} | ${txtParticipant.text} | ${txtTransportation.text} | ${txtDescription.text} | ${txtDate.text} | ${txtRisk.text} ";
-      txtDestination.clear();
-      txtTransportation.clear();
-      txtParticipant.clear();
-      txtDescription.clear();
-      txtRisk.clear();
-      txtDate.clear();
+        // _tripStorage.create(_selectval.toString(), txtDate.text, txtDescription.text, txtTransportation.text, txtParticipant.text, txtDestination.text, txtRisk.text);
+        // result +=
+        //     "\n${_selectval.toString()} |${txtDestination.text} | ${txtParticipant.text} | ${txtTransportation.text} | ${txtDescription.text} | ${txtDate.text} | ${txtRisk.text} ";
+        // txtDestination.clear();
+        // txtTransportation.clear();
+        // txtParticipant.clear();
+        // txtDescription.clear();
+        // txtRisk.clear();
+        // txtDate.clear();
 
-      //print(_selectval.toString(), txtDate.text, txtDescription.text, txtTransportation.text, txtParticipant.text, txtDestination.text, txtRisk.text);
-      // print(result);
-      Navigator.pushNamed(context, RouteNames.MyTrip);
-    });}
+        //print(_selectval.toString(), txtDate.text, txtDescription.text, txtTransportation.text, txtParticipant.text, txtDestination.text, txtRisk.text);
+        // print(result);
+        Navigator.pushNamed(context, RouteNames.MyTrip);
+      });
+    }
   }
 
   @override
@@ -266,5 +312,12 @@ class _NewTripState extends State<NewTrip> {
         return false;
       }
     });
+  }
+
+  String? requiredField(String? value) {
+    if(value == null || value.isEmpty){
+      return "This field is not allowed to be empty";
+    }
+    return null;
   }
 }

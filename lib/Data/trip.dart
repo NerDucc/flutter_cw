@@ -1,6 +1,3 @@
-import 'package:coursework/coursework/new_trip.dart';
-
-
 
 class Trip implements Comparable {
   final int? id;

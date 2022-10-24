@@ -2,8 +2,8 @@
 
 import 'package:coursework/Coursework/route_names.dart';
 import 'package:flutter/material.dart';
+import 'package:form_field_validator/form_field_validator.dart';
 import 'package:intl/intl.dart';
-
 import '../data/db.dart';
 
 enum RiskRequirement { Required, NotRequired }
@@ -18,6 +18,7 @@ class UpdateTrip extends StatefulWidget {
 
 class _UpdateTripState extends State<UpdateTrip> {
   late final TripDB _tripStorage;
+  final _formKey = GlobalKey<FormState>();
 
   _UpdateTripState() {
     _selectval = trip_list[0];
@@ -28,13 +29,14 @@ class _UpdateTripState extends State<UpdateTrip> {
   TextEditingController txtParticipant = TextEditingController();
   TextEditingController txtTransportation = TextEditingController();
   TextEditingController txtDescription = TextEditingController();
-  TextEditingController txtRisk = TextEditingController();
   TextEditingController txtDate = TextEditingController();
+  TextEditingController txtRisk = TextEditingController();
   // DateTime _dateTime = {$(DateTime.da)};
   RiskRequirement? requirement;
   final trip_list = ["Conference", "Signing", "Meeting", "Negotiation"];
   String? _selectval = "";
-  bool value = false;
+  var value = false;
+  bool riskValue = false;
 
   @override
   void initState() {
@@ -55,9 +57,6 @@ class _UpdateTripState extends State<UpdateTrip> {
     txtRisk.text = received['risk'];
     txtTransportation.text = received['transportation'];
 
-    // if(txtRisk.text == "Risk assessment required"){
-    //   value = true;
-    // }
     return Scaffold(
       appBar: AppBar(
         title: const Text("Update trip"),
@@ -66,6 +65,7 @@ class _UpdateTripState extends State<UpdateTrip> {
       body: Container(
         padding: EdgeInsets.all(20.0),
         child: ListView(
+          key: _formKey,
           children: [
             DropdownButtonFormField(
               value: received['name'],
@@ -91,6 +91,8 @@ class _UpdateTripState extends State<UpdateTrip> {
               height: 20.0,
             ),
             TextFormField(
+              validator: requiredField,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               controller: txtDestination,
               decoration: InputDecoration(
                 hintText: "Destination",
@@ -102,6 +104,8 @@ class _UpdateTripState extends State<UpdateTrip> {
               height: 20.0,
             ),
             TextFormField(
+                validator: requiredField,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
                 controller: txtDate,
                 decoration: InputDecoration(
                   icon: Icon(Icons.calendar_today), //icon of text field
@@ -137,6 +141,9 @@ class _UpdateTripState extends State<UpdateTrip> {
             ),
             TextFormField(
               controller: txtTransportation,
+              validator: MultiValidator([
+                RequiredValidator(errorText: "Transportation required"),
+              ]),
               decoration: InputDecoration(
                 hintText: "Transportation",
                 icon: const Icon(Icons.emoji_transportation),
@@ -161,8 +168,39 @@ class _UpdateTripState extends State<UpdateTrip> {
               children: [
                 Flexible(
                   child: TextFormField(
+                    validator: requiredField,
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
                     controller: txtRisk,
                     readOnly: true,
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            icon: Icon(Icons.health_and_safety_sharp),
+                            content:
+                                const Text("Risk assessment for the trip!!!"),
+                            actionsAlignment: MainAxisAlignment.end,
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(false);
+                                  txtRisk.text = "Not Required";
+                                },
+                                child: const Text("No"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  txtRisk.text = "Required";
+                                  Navigator.of(context).pop(false);
+                                },
+                                child: const Text("Yes"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
                     decoration: InputDecoration(
                       hintText: "Risk assessment",
                       icon: const Icon(Icons.crisis_alert),
@@ -170,28 +208,25 @@ class _UpdateTripState extends State<UpdateTrip> {
                     ),
                   ),
                 ),
-                Switch(
-                    value: value,
-                    onChanged: (onchanged) {
-                      setState(() {
-                        value = onchanged;
-                      }
-                      );
-                      if (value == true) {
-                          txtRisk.text = "Risk assessment required";
-                        } else {
-                          txtRisk.text = "Risk assessment not required";
-                        }
-                    },
-                    )
-
+                //  Switch(
+                //     value: value,
+                //     onChanged: (onchanged) async {
+                //       setState(() {
+                //         value = onchanged;
+                //       });
+                //       value = onchanged;
+                //     })
               ],
             ),
             SizedBox(
               height: 20.0,
             ),
             ElevatedButton(
-                onPressed: saveTrip,
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    saveTrip();
+                  }
+                },
                 child: Text('Update',
                     style: TextStyle(
                       fontSize: 18,
@@ -204,32 +239,34 @@ class _UpdateTripState extends State<UpdateTrip> {
 
   Future<void> saveTrip() async {
     bool shouldUpdate = await showUpdateDialog(context);
-    if(shouldUpdate)
-    {await _tripStorage.update(
-      id,
-      _selectval.toString(),
-      txtDate.text,
-      txtDescription.text,
-      txtTransportation.text,
-      txtParticipant.text,
-      txtDestination.text,
-      txtRisk.text,
-    );
-    setState(() {
-      //close keyboard
-      var currentFocus = FocusScope.of(context);
-      if (!currentFocus.hasPrimaryFocus) {
-        currentFocus.unfocus();
-      }
-      txtDestination.clear();
-      txtTransportation.clear();
-      txtParticipant.clear();
-      txtDescription.clear();
-      txtRisk.clear();
-      txtDate.clear();
 
-      Navigator.pushNamed(context, RouteNames.MyTrip);
-    });}
+    if (shouldUpdate) {
+      await _tripStorage.update(
+        id,
+        _selectval.toString(),
+        txtDate.text,
+        txtDescription.text,
+        txtTransportation.text,
+        txtParticipant.text,
+        txtDestination.text,
+        txtRisk.text,
+      );
+      setState(() {
+        //close keyboard
+        var currentFocus = FocusScope.of(context);
+        if (!currentFocus.hasPrimaryFocus) {
+          currentFocus.unfocus();
+        }
+        txtDestination.clear();
+        txtTransportation.clear();
+        txtParticipant.clear();
+        txtDescription.clear();
+
+        txtDate.clear();
+
+        Navigator.pushNamed(context, RouteNames.MyTrip);
+      });
+    }
   }
 
   @override
@@ -239,12 +276,11 @@ class _UpdateTripState extends State<UpdateTrip> {
     txtParticipant.dispose();
     txtDescription.dispose();
     txtDate.dispose();
-    txtRisk.dispose();
     super.dispose();
   }
-  
+
   Future<bool> showUpdateDialog(BuildContext context) {
-     return showDialog(
+    return showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -274,4 +310,11 @@ class _UpdateTripState extends State<UpdateTrip> {
       }
     });
   }
+
+  String? requiredField(String? value) {
+    if(value == null || value.isEmpty){
+      return "This field is not allowed to be empty";
+    }
+    return null;
   }
+}

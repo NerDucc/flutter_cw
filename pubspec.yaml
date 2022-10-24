@@ -39,6 +39,8 @@ dependencies:
   intl: ^0.17.0
   sqflite: ^2.1.0+1
   path_provider: ^2.0.11
+  form_field_validator: ^1.1.0
+  empty_widget: ^0.0.5
 
 dev_dependencies:
   flutter_test:
